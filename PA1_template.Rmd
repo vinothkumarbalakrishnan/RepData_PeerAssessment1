@@ -31,6 +31,9 @@ activitymonitoringdataexNAsum <- aggregate(as.numeric(activitymonitoringdataexNA
 colnames(activitymonitoringdataexNAsum) <- c("date", "Number of steps")
 activitymonitoringdataexNAsum
 ```
+
+
+
 ## 1.2 Histogram of the total number of steps taken each day
 ```{r}
 hist(activitymonitoringdataexNAsum$'Number of steps', 
@@ -88,8 +91,137 @@ activitymonitoringdataexNAavg2order$interval[1]
 ```
 
 
-## Imputing missing values  
+## 3. Imputing missing values  
+## 3.1 Total number of missing values in the dataset 
+```{r}
+activitymonitoringdataflagNumNA <- activitymonitoringdataflag[activitymonitoringdataflag$flag == FALSE,]
+nrow(activitymonitoringdataflagNumNA)
+```
+
+## 3.2 Strategy for filling in all of the missing values in the dataset
+##  The Strategy explanation : From dataset without NA, the mean of the steps is calculated by Interval and Weekday. 
+##  Then based on the Interval and Weekday the calculated mean is assigned to the NA values in the activity dataset.
+```{r}
+activitymonitoringdataWDaysNAflag <- cbind( activitymonitoringdata ,   
+                                          weekdays(as.Date(activitymonitoringdata$date)), 
+                                          is.na(activitymonitoringdata$steps))
+colnames(activitymonitoringdataWDaysNAflag) <- c("steps", "date", "Interval", "Weekday", "NAflag")
+activitymonitoringdataWDaysYesNA <- activitymonitoringdataWDaysNAflag[activitymonitoringdataWDaysNAflag$NAflag == TRUE,]
+colnames(activitymonitoringdataWDaysYesNA)  <- c("steps", "date", "Interval", "Weekday", "NAflag")
+activitymonitoringdataWDaysNoNA <- activitymonitoringdataWDaysNAflag[activitymonitoringdataWDaysNAflag$NAflag == FALSE,]
+colnames(activitymonitoringdataWDaysNoNA)  <- c("steps", "date", "Interval", "Weekday", "NAflag")
+strategytofillNA <- aggregate(as.numeric(activitymonitoringdataWDaysNoNA$steps), 
+                                            by = list(activitymonitoringdataWDaysNoNA[,"interval"], activitymonitoringdataWDaysNoNA[,"Weekday"]), 
+                                            FUN = mean, na.rm = TRUE)
+colnames(strategytofillNA) <- c("Interval", "Weekday", "MeanStepstofillNA")
+
+activitymonitoringdataWDaysYesNAlen <- nrow(activitymonitoringdataWDaysYesNA)
+for(i in 1:activitymonitoringdataWDaysYesNAlen)
+  {
+  strategytofillNAtemp1 <- strategytofillNA[strategytofillNA$Interval == activitymonitoringdataWDaysYesNA[i,]$Interval, ] 
+  strategytofillNAtemp2 <- strategytofillNAtemp1[strategytofillNAtemp1$Weekday == activitymonitoringdataWDaysYesNA[i,]$Weekday, ]
+  activitymonitoringdataWDaysYesNA[i,]$steps <- strategytofillNAtemp2$MeanStepstofillNA
+  }
+head(activitymonitoringdataWDaysYesNA)
+unique(is.na(activitymonitoringdataWDaysYesNA$steps))
+```
+
+## 3.3 New dataset that is equal to the original dataset but with the missing data filled in.
+
+```{r}
+activitymonitorNewDataset <- rbind(activitymonitoringdataWDaysYesNA, activitymonitoringdataWDaysNoNA )
+head(activitymonitorNewDataset)
+```
+
+## 3.4 Make a histogram of the total number of steps taken each day.
+##     Calculate and report the mean and median total number of steps taken per day. 
+##     Do these values differ from the estimates from the first part of the assignment? 
+##     What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+## Total number for steps taken each day.
+```{r}
+activitymonitorNewDatasetToAgg <- cbind(data.frame(cbind(activitymonitorNewDataset$steps)), 
+                                         activitymonitorNewDataset$date)
+colnames(activitymonitorNewDatasetToAgg) <- c("steps", "date")
+
+activitymonitorNewDatasetSum <- aggregate(as.numeric(activitymonitorNewDatasetToAgg$steps), 
+                                           by = list(activitymonitorNewDatasetToAgg[,"date"]), 
+                                           FUN = sum, na.rm = TRUE)
+colnames(activitymonitorNewDatasetSum) <- c("date", "Number of steps")
+
+
+activitymonitorNewDatasetSum
+```
+## Histogram of the total number of steps taken each day
+```{r}
+hist(activitymonitorNewDatasetSum$'Number of steps', 
+      main = "Histogram of the total number of steps taken each Day",
+      breaks = 20,
+      xlab = "steps",
+      xaxt = 'n')
+axis(1, at = seq(0,22000, by = 1000), labels = seq(0,22000, by = 1000) )
+```
+
+
+## New Dataset Mean and Median for the step taken per day
+```{r}
+## Mean and Median for the step taken per day.
+activitymonitorNewDatasetMean <- aggregate(as.numeric(activitymonitorNewDatasetToAgg$steps), 
+                                           by = list(activitymonitorNewDatasetToAgg[,"date"]), 
+                                           FUN = mean, na.rm = TRUE)
+colnames(activitymonitorNewDatasetMean) <- c("date", "Mean steps")
+activitymonitorNewDatasetMedian <- aggregate(as.numeric(activitymonitorNewDatasetToAgg$steps), 
+                                           by = list(activitymonitorNewDatasetToAgg[,"date"]), 
+                                           FUN = median, na.rm = TRUE)
+colnames(activitymonitorNewDatasetMedian) <- c("date", "Median steps")
+activitymonitorNewDatasetMeanMedian <- merge(activitymonitorNewDatasetMean,
+                                          activitymonitorNewDatasetMedian, by = 'date' )
+colnames(activitymonitorNewDatasetMeanMedian) <- c("Date", "Mean Steps", "Median Steps")
+activitymonitorNewDatasetMeanMedian
+```
+
+## Variance between the first part and the second part
+## Impact Total Number of steps
+```{r}
+totalnumberofStepsImpacttemp <- merge (activitymonitoringdataexNAsum, activitymonitorNewDatasetSum, by = "date" , all = TRUE )
+colnames(totalnumberofStepsImpacttemp) <- c("date", "OldTotalSteps" , "NewTotalSteps")
+totalnumberofStepsImpact <- data.frame(totalnumberofStepsImpacttemp$date, 
+                                       totalnumberofStepsImpacttemp$OldTotalSteps, 
+                                       totalnumberofStepsImpacttemp$NewTotalSteps,
+                                       totalnumberofStepsImpacttemp$OldTotalSteps - totalnumberofStepsImpacttemp$NewTotalSteps )
+colnames(totalnumberofStepsImpact) <- c("date", "OldTotalSteps" , "NewTotalSteps","TotalstepsImpact")
+
+totalnumberofStepsImpact
+```
+
+
+## Impact on Mean and Median steps
+```{r}
+MeanMedianStepsImpacttemp <- merge (activitymonitoringdataMeanMedian , activitymonitorNewDatasetMeanMedian,   by = "Date" , all = TRUE )
+colnames(MeanMedianStepsImpacttemp) <- c("date", "OldMeanSteps", "OldMedianSteps" , "NewMeanSteps", "NewMedianSteps")
+MeanMedianStepsImpact <- data.frame(MeanMedianStepsImpacttemp$date, 
+                               MeanMedianStepsImpacttemp$OldMeanSteps,
+                               MeanMedianStepsImpacttemp$NewMeanSteps,
+                               MeanMedianStepsImpacttemp$OldMeanSteps - MeanMedianStepsImpacttemp$NewMeanSteps,
+                               MeanMedianStepsImpacttemp$OldMedianSteps,
+                               MeanMedianStepsImpacttemp$NewMedianSteps,
+                               MeanMedianStepsImpacttemp$OldMedianSteps - MeanMedianStepsImpacttemp$NewMedianSteps )
+colnames(MeanMedianStepsImpact) <- c("date", "OldMeanSteps" , "NewMeanSteps","MeanstepsImpact", "OldMedianSteps", "NewMedianSteps", "MedianstepsImpact")
+
+MeanMedianStepsImpact
+
+```
 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r}
+plot(activitymonitoringdataexNAavg2$interval,
+     as.numeric(activitymonitoringdataexNAavg2$average_steps),
+     type = 'l',
+     xlab = "Minutes of the day",
+     ylab = "Average steps",
+     xaxt = 'n')
+axis(1, at = seq(0,2400, by = 100), labels = seq(0,2400, by = 100))
+```

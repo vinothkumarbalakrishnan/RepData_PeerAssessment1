@@ -394,16 +394,502 @@ axis(1, at = seq(0,2400, by = 100), labels = seq(0,2400, by = 100))
 
 <h2>2.2 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?</h2>
 
-<pre><code class="r">activitymonitoringdataexNAavg2order &lt;- activitymonitoringdataexNAavg2[order(-activitymonitoringdataexNAavg2$average_steps),]
+<pre><code class="r">activitymonitoringdataexNAavg2order &lt;- 
+  activitymonitoringdataexNAavg2[order(-activitymonitoringdataexNAavg2$average_steps),]
 activitymonitoringdataexNAavg2order$interval[1]
 </code></pre>
 
 <pre><code>## [1] 835
 </code></pre>
 
-<h2>Imputing missing values</h2>
+<h2>3. Imputing missing values</h2>
+
+<h2>3.1 Total number of missing values in the dataset</h2>
+
+<pre><code class="r">activitymonitoringdataflagNumNA &lt;- activitymonitoringdataflag[activitymonitoringdataflag$flag == FALSE,]
+nrow(activitymonitoringdataflagNumNA)
+</code></pre>
+
+<pre><code>## [1] 2304
+</code></pre>
+
+<h2>3.2 Strategy for filling in all of the missing values in the dataset</h2>
+
+<h2>The Strategy explanation : From dataset without NA, the mean of the steps is calculated by Interval and Weekday.</h2>
+
+<h2>Then based on the Interval and Weekday the calculated mean is assigned to the NA values in the activity dataset.</h2>
+
+<pre><code class="r">activitymonitoringdataWDaysNAflag &lt;- cbind( activitymonitoringdata ,   
+                                          weekdays(as.Date(activitymonitoringdata$date)), 
+                                          is.na(activitymonitoringdata$steps))
+colnames(activitymonitoringdataWDaysNAflag) &lt;- c(&quot;steps&quot;, &quot;date&quot;, &quot;Interval&quot;, &quot;Weekday&quot;, &quot;NAflag&quot;)
+activitymonitoringdataWDaysYesNA &lt;- activitymonitoringdataWDaysNAflag[activitymonitoringdataWDaysNAflag$NAflag == TRUE,]
+colnames(activitymonitoringdataWDaysYesNA)  &lt;- c(&quot;steps&quot;, &quot;date&quot;, &quot;Interval&quot;, &quot;Weekday&quot;, &quot;NAflag&quot;)
+activitymonitoringdataWDaysNoNA &lt;- activitymonitoringdataWDaysNAflag[activitymonitoringdataWDaysNAflag$NAflag == FALSE,]
+colnames(activitymonitoringdataWDaysNoNA)  &lt;- c(&quot;steps&quot;, &quot;date&quot;, &quot;Interval&quot;, &quot;Weekday&quot;, &quot;NAflag&quot;)
+strategytofillNA &lt;- aggregate(as.numeric(activitymonitoringdataWDaysNoNA$steps), 
+                                            by = list(activitymonitoringdataWDaysNoNA[,&quot;interval&quot;], activitymonitoringdataWDaysNoNA[,&quot;Weekday&quot;]), 
+                                            FUN = mean, na.rm = TRUE)
+</code></pre>
+
+<pre><code>## Error in `[.data.frame`(activitymonitoringdataWDaysNoNA, , &quot;interval&quot;): undefined columns selected
+</code></pre>
+
+<pre><code class="r">colnames(strategytofillNA) &lt;- c(&quot;Interval&quot;, &quot;Weekday&quot;, &quot;MeanStepstofillNA&quot;)
+
+activitymonitoringdataWDaysYesNAlen &lt;- nrow(activitymonitoringdataWDaysYesNA)
+for(i in 1:activitymonitoringdataWDaysYesNAlen)
+  {
+  strategytofillNAtemp1 &lt;- strategytofillNA[strategytofillNA$Interval == activitymonitoringdataWDaysYesNA[i,]$Interval, ] 
+  strategytofillNAtemp2 &lt;- strategytofillNAtemp1[strategytofillNAtemp1$Weekday == activitymonitoringdataWDaysYesNA[i,]$Weekday, ]
+  activitymonitoringdataWDaysYesNA[i,]$steps &lt;- strategytofillNAtemp2$MeanStepstofillNA
+  }
+head(activitymonitoringdataWDaysYesNA)
+</code></pre>
+
+<pre><code>##      steps       date Interval Weekday NAflag
+## 1 1.428571 2012-10-01        0  Monday   TRUE
+## 2 0.000000 2012-10-01        5  Monday   TRUE
+## 3 0.000000 2012-10-01       10  Monday   TRUE
+## 4 0.000000 2012-10-01       15  Monday   TRUE
+## 5 0.000000 2012-10-01       20  Monday   TRUE
+## 6 5.000000 2012-10-01       25  Monday   TRUE
+</code></pre>
+
+<pre><code class="r">unique(is.na(activitymonitoringdataWDaysYesNA$steps))
+</code></pre>
+
+<pre><code>## [1] FALSE
+</code></pre>
+
+<h2>3.3 New dataset that is equal to the original dataset but with the missing data filled in.</h2>
+
+<pre><code class="r">activitymonitorNewDataset &lt;- rbind(activitymonitoringdataWDaysYesNA, activitymonitoringdataWDaysNoNA )
+head(activitymonitorNewDataset)
+</code></pre>
+
+<pre><code>##      steps       date Interval Weekday NAflag
+## 1 1.428571 2012-10-01        0  Monday   TRUE
+## 2 0.000000 2012-10-01        5  Monday   TRUE
+## 3 0.000000 2012-10-01       10  Monday   TRUE
+## 4 0.000000 2012-10-01       15  Monday   TRUE
+## 5 0.000000 2012-10-01       20  Monday   TRUE
+## 6 5.000000 2012-10-01       25  Monday   TRUE
+</code></pre>
+
+<h2>3.4 Make a histogram of the total number of steps taken each day.</h2>
+
+<h2>Calculate and report the mean and median total number of steps taken per day.</h2>
+
+<h2>Do these values differ from the estimates from the first part of the assignment?</h2>
+
+<h2>What is the impact of imputing missing data on the estimates of the total daily number of steps?</h2>
+
+<h2>Total number for steps taken each day.</h2>
+
+<pre><code class="r">activitymonitorNewDatasetToAgg &lt;- cbind(data.frame(cbind(activitymonitorNewDataset$steps)), 
+                                         activitymonitorNewDataset$date)
+colnames(activitymonitorNewDatasetToAgg) &lt;- c(&quot;steps&quot;, &quot;date&quot;)
+
+activitymonitorNewDatasetSum &lt;- aggregate(as.numeric(activitymonitorNewDatasetToAgg$steps), 
+                                           by = list(activitymonitorNewDatasetToAgg[,&quot;date&quot;]), 
+                                           FUN = sum, na.rm = TRUE)
+colnames(activitymonitorNewDatasetSum) &lt;- c(&quot;date&quot;, &quot;Number of steps&quot;)
+
+
+activitymonitorNewDatasetSum
+</code></pre>
+
+<pre><code>##          date Number of steps
+## 1  2012-10-01        9974.857
+## 2  2012-10-02         126.000
+## 3  2012-10-03       11352.000
+## 4  2012-10-04       12116.000
+## 5  2012-10-05       13294.000
+## 6  2012-10-06       15420.000
+## 7  2012-10-07       11015.000
+## 8  2012-10-08        9974.857
+## 9  2012-10-09       12811.000
+## 10 2012-10-10        9900.000
+## 11 2012-10-11       10304.000
+## 12 2012-10-12       17382.000
+## 13 2012-10-13       12426.000
+## 14 2012-10-14       15098.000
+## 15 2012-10-15       10139.000
+## 16 2012-10-16       15084.000
+## 17 2012-10-17       13452.000
+## 18 2012-10-18       10056.000
+## 19 2012-10-19       11829.000
+## 20 2012-10-20       10395.000
+## 21 2012-10-21        8821.000
+## 22 2012-10-22       13460.000
+## 23 2012-10-23        8918.000
+## 24 2012-10-24        8355.000
+## 25 2012-10-25        2492.000
+## 26 2012-10-26        6778.000
+## 27 2012-10-27       10119.000
+## 28 2012-10-28       11458.000
+## 29 2012-10-29        5018.000
+## 30 2012-10-30        9819.000
+## 31 2012-10-31       15414.000
+## 32 2012-11-01        8212.750
+## 33 2012-11-02       10600.000
+## 34 2012-11-03       10571.000
+## 35 2012-11-04       12277.714
+## 36 2012-11-05       10439.000
+## 37 2012-11-06        8334.000
+## 38 2012-11-07       12883.000
+## 39 2012-11-08        3219.000
+## 40 2012-11-09       12359.714
+## 41 2012-11-10       12535.429
+## 42 2012-11-11       12608.000
+## 43 2012-11-12       10765.000
+## 44 2012-11-13        7336.000
+## 45 2012-11-14       11790.750
+## 46 2012-11-15          41.000
+## 47 2012-11-16        5441.000
+## 48 2012-11-17       14339.000
+## 49 2012-11-18       15110.000
+## 50 2012-11-19        8841.000
+## 51 2012-11-20        4472.000
+## 52 2012-11-21       12787.000
+## 53 2012-11-22       20427.000
+## 54 2012-11-23       21194.000
+## 55 2012-11-24       14478.000
+## 56 2012-11-25       11834.000
+## 57 2012-11-26       11162.000
+## 58 2012-11-27       13646.000
+## 59 2012-11-28       10183.000
+## 60 2012-11-29        7047.000
+## 61 2012-11-30       12359.714
+</code></pre>
+
+<h2>Histogram of the total number of steps taken each day</h2>
+
+<pre><code class="r">hist(activitymonitorNewDatasetSum$&#39;Number of steps&#39;, 
+      main = &quot;Histogram of the total number of steps taken each Day&quot;,
+      breaks = 20,
+      xlab = &quot;steps&quot;,
+      xaxt = &#39;n&#39;)
+axis(1, at = seq(0,22000, by = 1000), labels = seq(0,22000, by = 1000) )
+</code></pre>
+
+<p><img src="data:image/png;base64,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" alt="plot of chunk unnamed-chunk-11"/> </p>
+
+<h2>New Dataset Mean and Median for the step taken per day</h2>
+
+<pre><code class="r">## Mean and Median for the step taken per day.
+activitymonitorNewDatasetMean &lt;- aggregate(as.numeric(activitymonitorNewDatasetToAgg$steps), 
+                                           by = list(activitymonitorNewDatasetToAgg[,&quot;date&quot;]), 
+                                           FUN = mean, na.rm = TRUE)
+colnames(activitymonitorNewDatasetMean) &lt;- c(&quot;date&quot;, &quot;Mean steps&quot;)
+activitymonitorNewDatasetMedian &lt;- aggregate(as.numeric(activitymonitorNewDatasetToAgg$steps), 
+                                           by = list(activitymonitorNewDatasetToAgg[,&quot;date&quot;]), 
+                                           FUN = median, na.rm = TRUE)
+colnames(activitymonitorNewDatasetMedian) &lt;- c(&quot;date&quot;, &quot;Median steps&quot;)
+activitymonitorNewDatasetMeanMedian &lt;- merge(activitymonitorNewDatasetMean,
+                                          activitymonitorNewDatasetMedian, by = &#39;date&#39; )
+colnames(activitymonitorNewDatasetMeanMedian) &lt;- c(&quot;Date&quot;, &quot;Mean Steps&quot;, &quot;Median Steps&quot;)
+activitymonitorNewDatasetMeanMedian
+</code></pre>
+
+<pre><code>##          Date Mean Steps Median Steps
+## 1  2012-10-01 34.6349206     8.214286
+## 2  2012-10-02  0.4375000     0.000000
+## 3  2012-10-03 39.4166667     0.000000
+## 4  2012-10-04 42.0694444     0.000000
+## 5  2012-10-05 46.1597222     0.000000
+## 6  2012-10-06 53.5416667     0.000000
+## 7  2012-10-07 38.2465278     0.000000
+## 8  2012-10-08 34.6349206     8.214286
+## 9  2012-10-09 44.4826389     0.000000
+## 10 2012-10-10 34.3750000     0.000000
+## 11 2012-10-11 35.7777778     0.000000
+## 12 2012-10-12 60.3541667     0.000000
+## 13 2012-10-13 43.1458333     0.000000
+## 14 2012-10-14 52.4236111     0.000000
+## 15 2012-10-15 35.2048611     0.000000
+## 16 2012-10-16 52.3750000     0.000000
+## 17 2012-10-17 46.7083333     0.000000
+## 18 2012-10-18 34.9166667     0.000000
+## 19 2012-10-19 41.0729167     0.000000
+## 20 2012-10-20 36.0937500     0.000000
+## 21 2012-10-21 30.6284722     0.000000
+## 22 2012-10-22 46.7361111     0.000000
+## 23 2012-10-23 30.9652778     0.000000
+## 24 2012-10-24 29.0104167     0.000000
+## 25 2012-10-25  8.6527778     0.000000
+## 26 2012-10-26 23.5347222     0.000000
+## 27 2012-10-27 35.1354167     0.000000
+## 28 2012-10-28 39.7847222     0.000000
+## 29 2012-10-29 17.4236111     0.000000
+## 30 2012-10-30 34.0937500     0.000000
+## 31 2012-10-31 53.5208333     0.000000
+## 32 2012-11-01 28.5164931     7.750000
+## 33 2012-11-02 36.8055556     0.000000
+## 34 2012-11-03 36.7048611     0.000000
+## 35 2012-11-04 42.6309524    23.857143
+## 36 2012-11-05 36.2465278     0.000000
+## 37 2012-11-06 28.9375000     0.000000
+## 38 2012-11-07 44.7326389     0.000000
+## 39 2012-11-08 11.1770833     0.000000
+## 40 2012-11-09 42.9156746    15.500000
+## 41 2012-11-10 43.5257937    16.428571
+## 42 2012-11-11 43.7777778     0.000000
+## 43 2012-11-12 37.3784722     0.000000
+## 44 2012-11-13 25.4722222     0.000000
+## 45 2012-11-14 40.9401042    12.625000
+## 46 2012-11-15  0.1423611     0.000000
+## 47 2012-11-16 18.8923611     0.000000
+## 48 2012-11-17 49.7881944     0.000000
+## 49 2012-11-18 52.4652778     0.000000
+## 50 2012-11-19 30.6979167     0.000000
+## 51 2012-11-20 15.5277778     0.000000
+## 52 2012-11-21 44.3993056     0.000000
+## 53 2012-11-22 70.9270833     0.000000
+## 54 2012-11-23 73.5902778     0.000000
+## 55 2012-11-24 50.2708333     0.000000
+## 56 2012-11-25 41.0902778     0.000000
+## 57 2012-11-26 38.7569444     0.000000
+## 58 2012-11-27 47.3819444     0.000000
+## 59 2012-11-28 35.3576389     0.000000
+## 60 2012-11-29 24.4687500     0.000000
+## 61 2012-11-30 42.9156746    15.500000
+</code></pre>
+
+<h2>Variance between the first part and the second part</h2>
+
+<h2>Impact Total Number of steps</h2>
+
+<pre><code class="r">totalnumberofStepsImpacttemp &lt;- merge (activitymonitoringdataexNAsum, activitymonitorNewDatasetSum, by = &quot;date&quot; , all = TRUE )
+colnames(totalnumberofStepsImpacttemp) &lt;- c(&quot;date&quot;, &quot;OldTotalSteps&quot; , &quot;NewTotalSteps&quot;)
+totalnumberofStepsImpact &lt;- data.frame(totalnumberofStepsImpacttemp$date, 
+                                       totalnumberofStepsImpacttemp$OldTotalSteps, 
+                                       totalnumberofStepsImpacttemp$NewTotalSteps,
+                                       totalnumberofStepsImpacttemp$OldTotalSteps - totalnumberofStepsImpacttemp$NewTotalSteps )
+colnames(totalnumberofStepsImpact) &lt;- c(&quot;date&quot;, &quot;OldTotalSteps&quot; , &quot;NewTotalSteps&quot;,&quot;TotalstepsImpact&quot;)
+
+totalnumberofStepsImpact
+</code></pre>
+
+<pre><code>##          date OldTotalSteps NewTotalSteps TotalstepsImpact
+## 1  2012-10-01            NA      9974.857               NA
+## 2  2012-10-02           126       126.000                0
+## 3  2012-10-03         11352     11352.000                0
+## 4  2012-10-04         12116     12116.000                0
+## 5  2012-10-05         13294     13294.000                0
+## 6  2012-10-06         15420     15420.000                0
+## 7  2012-10-07         11015     11015.000                0
+## 8  2012-10-08            NA      9974.857               NA
+## 9  2012-10-09         12811     12811.000                0
+## 10 2012-10-10          9900      9900.000                0
+## 11 2012-10-11         10304     10304.000                0
+## 12 2012-10-12         17382     17382.000                0
+## 13 2012-10-13         12426     12426.000                0
+## 14 2012-10-14         15098     15098.000                0
+## 15 2012-10-15         10139     10139.000                0
+## 16 2012-10-16         15084     15084.000                0
+## 17 2012-10-17         13452     13452.000                0
+## 18 2012-10-18         10056     10056.000                0
+## 19 2012-10-19         11829     11829.000                0
+## 20 2012-10-20         10395     10395.000                0
+## 21 2012-10-21          8821      8821.000                0
+## 22 2012-10-22         13460     13460.000                0
+## 23 2012-10-23          8918      8918.000                0
+## 24 2012-10-24          8355      8355.000                0
+## 25 2012-10-25          2492      2492.000                0
+## 26 2012-10-26          6778      6778.000                0
+## 27 2012-10-27         10119     10119.000                0
+## 28 2012-10-28         11458     11458.000                0
+## 29 2012-10-29          5018      5018.000                0
+## 30 2012-10-30          9819      9819.000                0
+## 31 2012-10-31         15414     15414.000                0
+## 32 2012-11-01            NA      8212.750               NA
+## 33 2012-11-02         10600     10600.000                0
+## 34 2012-11-03         10571     10571.000                0
+## 35 2012-11-04            NA     12277.714               NA
+## 36 2012-11-05         10439     10439.000                0
+## 37 2012-11-06          8334      8334.000                0
+## 38 2012-11-07         12883     12883.000                0
+## 39 2012-11-08          3219      3219.000                0
+## 40 2012-11-09            NA     12359.714               NA
+## 41 2012-11-10            NA     12535.429               NA
+## 42 2012-11-11         12608     12608.000                0
+## 43 2012-11-12         10765     10765.000                0
+## 44 2012-11-13          7336      7336.000                0
+## 45 2012-11-14            NA     11790.750               NA
+## 46 2012-11-15            41        41.000                0
+## 47 2012-11-16          5441      5441.000                0
+## 48 2012-11-17         14339     14339.000                0
+## 49 2012-11-18         15110     15110.000                0
+## 50 2012-11-19          8841      8841.000                0
+## 51 2012-11-20          4472      4472.000                0
+## 52 2012-11-21         12787     12787.000                0
+## 53 2012-11-22         20427     20427.000                0
+## 54 2012-11-23         21194     21194.000                0
+## 55 2012-11-24         14478     14478.000                0
+## 56 2012-11-25         11834     11834.000                0
+## 57 2012-11-26         11162     11162.000                0
+## 58 2012-11-27         13646     13646.000                0
+## 59 2012-11-28         10183     10183.000                0
+## 60 2012-11-29          7047      7047.000                0
+## 61 2012-11-30            NA     12359.714               NA
+</code></pre>
+
+<h2>Impact on Mean and Median steps</h2>
+
+<pre><code class="r">MeanMedianStepsImpacttemp &lt;- merge (activitymonitoringdataMeanMedian , activitymonitorNewDatasetMeanMedian,   by = &quot;Date&quot; , all = TRUE )
+colnames(MeanMedianStepsImpacttemp) &lt;- c(&quot;date&quot;, &quot;OldMeanSteps&quot;, &quot;OldMedianSteps&quot; , &quot;NewMeanSteps&quot;, &quot;NewMedianSteps&quot;)
+MeanMedianStepsImpact &lt;- data.frame(MeanMedianStepsImpacttemp$date, 
+                               MeanMedianStepsImpacttemp$OldMeanSteps,
+                               MeanMedianStepsImpacttemp$NewMeanSteps,
+                               MeanMedianStepsImpacttemp$OldMeanSteps - MeanMedianStepsImpacttemp$NewMeanSteps,
+                               MeanMedianStepsImpacttemp$OldMedianSteps,
+                               MeanMedianStepsImpacttemp$NewMedianSteps,
+                               MeanMedianStepsImpacttemp$OldMedianSteps - MeanMedianStepsImpacttemp$NewMedianSteps )
+colnames(MeanMedianStepsImpact) &lt;- c(&quot;date&quot;, &quot;OldMeanSteps&quot; , &quot;NewMeanSteps&quot;,&quot;MeanstepsImpact&quot;, &quot;OldMedianSteps&quot;, &quot;NewMedianSteps&quot;, &quot;MedianstepsImpact&quot;)
+
+MeanMedianStepsImpact
+</code></pre>
+
+<pre><code>##          date OldMeanSteps NewMeanSteps MeanstepsImpact OldMedianSteps
+## 1  2012-10-01           NA   34.6349206              NA             NA
+## 2  2012-10-02    0.4375000    0.4375000               0              0
+## 3  2012-10-03   39.4166667   39.4166667               0              0
+## 4  2012-10-04   42.0694444   42.0694444               0              0
+## 5  2012-10-05   46.1597222   46.1597222               0              0
+## 6  2012-10-06   53.5416667   53.5416667               0              0
+## 7  2012-10-07   38.2465278   38.2465278               0              0
+## 8  2012-10-08           NA   34.6349206              NA             NA
+## 9  2012-10-09   44.4826389   44.4826389               0              0
+## 10 2012-10-10   34.3750000   34.3750000               0              0
+## 11 2012-10-11   35.7777778   35.7777778               0              0
+## 12 2012-10-12   60.3541667   60.3541667               0              0
+## 13 2012-10-13   43.1458333   43.1458333               0              0
+## 14 2012-10-14   52.4236111   52.4236111               0              0
+## 15 2012-10-15   35.2048611   35.2048611               0              0
+## 16 2012-10-16   52.3750000   52.3750000               0              0
+## 17 2012-10-17   46.7083333   46.7083333               0              0
+## 18 2012-10-18   34.9166667   34.9166667               0              0
+## 19 2012-10-19   41.0729167   41.0729167               0              0
+## 20 2012-10-20   36.0937500   36.0937500               0              0
+## 21 2012-10-21   30.6284722   30.6284722               0              0
+## 22 2012-10-22   46.7361111   46.7361111               0              0
+## 23 2012-10-23   30.9652778   30.9652778               0              0
+## 24 2012-10-24   29.0104167   29.0104167               0              0
+## 25 2012-10-25    8.6527778    8.6527778               0              0
+## 26 2012-10-26   23.5347222   23.5347222               0              0
+## 27 2012-10-27   35.1354167   35.1354167               0              0
+## 28 2012-10-28   39.7847222   39.7847222               0              0
+## 29 2012-10-29   17.4236111   17.4236111               0              0
+## 30 2012-10-30   34.0937500   34.0937500               0              0
+## 31 2012-10-31   53.5208333   53.5208333               0              0
+## 32 2012-11-01           NA   28.5164931              NA             NA
+## 33 2012-11-02   36.8055556   36.8055556               0              0
+## 34 2012-11-03   36.7048611   36.7048611               0              0
+## 35 2012-11-04           NA   42.6309524              NA             NA
+## 36 2012-11-05   36.2465278   36.2465278               0              0
+## 37 2012-11-06   28.9375000   28.9375000               0              0
+## 38 2012-11-07   44.7326389   44.7326389               0              0
+## 39 2012-11-08   11.1770833   11.1770833               0              0
+## 40 2012-11-09           NA   42.9156746              NA             NA
+## 41 2012-11-10           NA   43.5257937              NA             NA
+## 42 2012-11-11   43.7777778   43.7777778               0              0
+## 43 2012-11-12   37.3784722   37.3784722               0              0
+## 44 2012-11-13   25.4722222   25.4722222               0              0
+## 45 2012-11-14           NA   40.9401042              NA             NA
+## 46 2012-11-15    0.1423611    0.1423611               0              0
+## 47 2012-11-16   18.8923611   18.8923611               0              0
+## 48 2012-11-17   49.7881944   49.7881944               0              0
+## 49 2012-11-18   52.4652778   52.4652778               0              0
+## 50 2012-11-19   30.6979167   30.6979167               0              0
+## 51 2012-11-20   15.5277778   15.5277778               0              0
+## 52 2012-11-21   44.3993056   44.3993056               0              0
+## 53 2012-11-22   70.9270833   70.9270833               0              0
+## 54 2012-11-23   73.5902778   73.5902778               0              0
+## 55 2012-11-24   50.2708333   50.2708333               0              0
+## 56 2012-11-25   41.0902778   41.0902778               0              0
+## 57 2012-11-26   38.7569444   38.7569444               0              0
+## 58 2012-11-27   47.3819444   47.3819444               0              0
+## 59 2012-11-28   35.3576389   35.3576389               0              0
+## 60 2012-11-29   24.4687500   24.4687500               0              0
+## 61 2012-11-30           NA   42.9156746              NA             NA
+##    NewMedianSteps MedianstepsImpact
+## 1        8.214286                NA
+## 2        0.000000                 0
+## 3        0.000000                 0
+## 4        0.000000                 0
+## 5        0.000000                 0
+## 6        0.000000                 0
+## 7        0.000000                 0
+## 8        8.214286                NA
+## 9        0.000000                 0
+## 10       0.000000                 0
+## 11       0.000000                 0
+## 12       0.000000                 0
+## 13       0.000000                 0
+## 14       0.000000                 0
+## 15       0.000000                 0
+## 16       0.000000                 0
+## 17       0.000000                 0
+## 18       0.000000                 0
+## 19       0.000000                 0
+## 20       0.000000                 0
+## 21       0.000000                 0
+## 22       0.000000                 0
+## 23       0.000000                 0
+## 24       0.000000                 0
+## 25       0.000000                 0
+## 26       0.000000                 0
+## 27       0.000000                 0
+## 28       0.000000                 0
+## 29       0.000000                 0
+## 30       0.000000                 0
+## 31       0.000000                 0
+## 32       7.750000                NA
+## 33       0.000000                 0
+## 34       0.000000                 0
+## 35      23.857143                NA
+## 36       0.000000                 0
+## 37       0.000000                 0
+## 38       0.000000                 0
+## 39       0.000000                 0
+## 40      15.500000                NA
+## 41      16.428571                NA
+## 42       0.000000                 0
+## 43       0.000000                 0
+## 44       0.000000                 0
+## 45      12.625000                NA
+## 46       0.000000                 0
+## 47       0.000000                 0
+## 48       0.000000                 0
+## 49       0.000000                 0
+## 50       0.000000                 0
+## 51       0.000000                 0
+## 52       0.000000                 0
+## 53       0.000000                 0
+## 54       0.000000                 0
+## 55       0.000000                 0
+## 56       0.000000                 0
+## 57       0.000000                 0
+## 58       0.000000                 0
+## 59       0.000000                 0
+## 60       0.000000                 0
+## 61      15.500000                NA
+</code></pre>
 
 <h2>Are there differences in activity patterns between weekdays and weekends?</h2>
+
+<pre><code class="r">plot(activitymonitoringdataexNAavg2$interval,
+     as.numeric(activitymonitoringdataexNAavg2$average_steps),
+     type = &#39;l&#39;,
+     xlab = &quot;Minutes of the day&quot;,
+     ylab = &quot;Average steps&quot;,
+     xaxt = &#39;n&#39;)
+axis(1, at = seq(0,2400, by = 100), labels = seq(0,2400, by = 100))
+</code></pre>
+
+<p><img src="data:image/png;base64,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" alt="plot of chunk unnamed-chunk-15"/> </p>
 
 </body>
 
