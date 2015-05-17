@@ -306,7 +306,7 @@ head(activitymonitorNewDataset)
 ##     Do these values differ from the estimates from the first part of the assignment? 
 ##     What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
-## Total number for steps taken each day.
+## 3.4.1 Total number for steps taken each day after filling missed data
 
 ```r
 activitymonitorNewDatasetToAgg <- cbind(data.frame(cbind(activitymonitorNewDataset$steps)), 
@@ -386,7 +386,7 @@ activitymonitorNewDatasetSum
 ## 60 2012-11-29        7047.000
 ## 61 2012-11-30       12359.714
 ```
-## Histogram of the total number of steps taken each day
+## 3.4.2 Histogram(New dataset) of the total number of steps taken each day
 
 ```r
 hist(activitymonitorNewDatasetSum$'Number of steps', 
@@ -400,7 +400,7 @@ axis(1, at = seq(0,22000, by = 1000), labels = seq(0,22000, by = 1000) )
 ![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png) 
 
 
-## New Dataset Mean and Median for the step taken per day
+## 3.4.3 New Dataset Mean and Median for the step taken per day
 
 ```r
 ## Mean and Median for the step taken per day.
@@ -483,7 +483,7 @@ activitymonitorNewDatasetMeanMedian
 ## 61 2012-11-30 42.9156746    15.500000
 ```
 
-## Variance between the first part and the second part
+## 3.4.4 Variance between the first part and the second part
 ## Impact Total Number of steps
 
 ```r
@@ -564,7 +564,7 @@ totalnumberofStepsImpact
 ```
 
 
-## Impact on Mean and Median steps
+## 3.4.5 Impact on Mean and Median steps
 
 ```r
 MeanMedianStepsImpacttemp <- merge (activitymonitoringdataMeanMedian , activitymonitorNewDatasetMeanMedian,   by = "Date" , all = TRUE )
@@ -710,17 +710,44 @@ MeanMedianStepsImpact
 
 
 
-## Are there differences in activity patterns between weekdays and weekends?
+## 4 Are there differences in activity patterns between weekdays and weekends?
 
 
 ```r
-plot(activitymonitoringdataexNAavg2$interval,
-     as.numeric(activitymonitoringdataexNAavg2$average_steps),
+par(mfrow=c(2,1))
+activitymonitorNewDatasetWeekday <- activitymonitorNewDataset[activitymonitorNewDataset$Weekday %in% c("Friday", "Monday", "Thursday" ,"Tuesday","Wednesday"), ]
+activitymonitorNewDatasetWeekdayToAgg <- cbind(data.frame(cbind(activitymonitorNewDatasetWeekday$steps)), 
+                                          activitymonitorNewDatasetWeekday$Interval)
+colnames(activitymonitorNewDatasetWeekdayToAgg) <- c("steps", "interval")
+activitymonitorNewDatasetWeekdayToMean <- aggregate(as.numeric(activitymonitorNewDatasetWeekdayToAgg$steps), 
+                                            by = list(activitymonitorNewDatasetWeekdayToAgg[,"interval"]), 
+                                            FUN = mean, na.rm = TRUE)
+colnames(activitymonitorNewDatasetWeekdayToMean) <- c("interval", "average_steps")
+plot(activitymonitorNewDatasetWeekdayToMean$interval,
+     as.numeric(activitymonitorNewDatasetWeekdayToMean$average_steps),
      type = 'l',
      xlab = "Minutes of the day",
-     ylab = "Average steps",
+     ylab = "Number of Steps",
      xaxt = 'n')
-axis(1, at = seq(0,2400, by = 100), labels = seq(0,2400, by = 100))
+axis(1,  at = seq(0,2400, by = 100), labels = seq(0,2400, by = 100))
+title ( "weekday")
+
+activitymonitorNewDatasetWeekend <- activitymonitorNewDataset[activitymonitorNewDataset$Weekday %in% c("Saturday", "Sunday"), ]
+activitymonitorNewDatasetWeekendToAgg <- cbind(data.frame(cbind(activitymonitorNewDatasetWeekend$steps)), 
+                                          activitymonitorNewDatasetWeekend$Interval)
+colnames(activitymonitorNewDatasetWeekendToAgg) <- c("steps", "interval")
+activitymonitorNewDatasetWeekendToMean <- aggregate(as.numeric(activitymonitorNewDatasetWeekendToAgg$steps), 
+                                            by = list(activitymonitorNewDatasetWeekendToAgg[,"interval"]), 
+                                            FUN = mean, na.rm = TRUE)
+colnames(activitymonitorNewDatasetWeekendToMean) <- c("interval", "average_steps")
+plot(activitymonitorNewDatasetWeekendToMean$interval,
+     as.numeric(activitymonitorNewDatasetWeekendToMean$average_steps),
+     type = 'l',
+     xlab = "Minutes of the day",
+     ylab = "Number of Steps",
+     xaxt = 'n')
+axis(1 , at = seq(0,2400, by = 100), labels = seq(0,2400, by = 100))
+title ("Weekend")
 ```
 
 ![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png) 
