@@ -1,4 +1,9 @@
-# Reproducible Research: Peer Assessment 1
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+---
 
 
 
@@ -18,10 +23,13 @@ activitymonitoringdata <- read.csv(activitymonitoringdataconnection, sep=",", he
 activitymonitoringdataflag <- cbind( activitymonitoringdata, !is.na(activitymonitoringdata$steps))
 colnames(activitymonitoringdataflag)[4] <- "flag"
 activitymonitoringdataexNA <- activitymonitoringdataflag[activitymonitoringdataflag$flag == TRUE,]
-activitymonitoringdataexNAtoAgg <- cbind(data.frame(cbind(activitymonitoringdataexNA$steps)), activitymonitoringdataexNA$date)
+activitymonitoringdataexNAtoAgg <- cbind(data.frame(cbind(activitymonitoringdataexNA$steps)), 
+                                         activitymonitoringdataexNA$date)
 colnames(activitymonitoringdataexNAtoAgg) <- c("steps", "date")
 
-activitymonitoringdataexNAsum <- aggregate(as.numeric(activitymonitoringdataexNAtoAgg$steps), by = list(activitymonitoringdataexNAtoAgg[,"date"]), FUN = sum, na.rm = TRUE)
+activitymonitoringdataexNAsum <- aggregate(as.numeric(activitymonitoringdataexNAtoAgg$steps), 
+                                           by = list(activitymonitoringdataexNAtoAgg[,"date"]), 
+                                           FUN = sum, na.rm = TRUE)
 colnames(activitymonitoringdataexNAsum) <- c("date", "Number of steps")
 activitymonitoringdataexNAsum
 ```
@@ -93,15 +101,20 @@ hist(activitymonitoringdataexNAsum$'Number of steps',
 axis(1, at = seq(0,22000, by = 1000), labels = seq(0,22000, by = 1000) )
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-3-1.png) 
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png) 
 ## 1.3 Mean and Median of the total number of steps taken per day
 
 ```r
-activitymonitoringdataexNAMean <- aggregate(activitymonitoringdataexNAtoAgg$steps, by = list(activitymonitoringdataexNAtoAgg[,"date"]), FUN =  mean, na.rm = TRUE)
+activitymonitoringdataexNAMean <- aggregate(activitymonitoringdataexNAtoAgg$steps, 
+                                            by = list(activitymonitoringdataexNAtoAgg[,"date"]), 
+                                            FUN =  mean, na.rm = TRUE)
 colnames(activitymonitoringdataexNAMean) <- c("Date", "Mean of Steps")
-activitymonitoringdataexNAMedian <- aggregate(activitymonitoringdataexNAtoAgg$steps, by = list(activitymonitoringdataexNAtoAgg[,"date"]), FUN = median, na.rm = TRUE)
+activitymonitoringdataexNAMedian <- aggregate(activitymonitoringdataexNAtoAgg$steps, 
+                                              by = list(activitymonitoringdataexNAtoAgg[,"date"]), 
+                                              FUN = median, na.rm = TRUE)
 colnames(activitymonitoringdataexNAMedian) <- c("Date", "Median of Steps")
-activitymonitoringdataMeanMedian <- merge(activitymonitoringdataexNAMean,activitymonitoringdataexNAMedian, by = 'Date' )
+activitymonitoringdataMeanMedian <- merge(activitymonitoringdataexNAMean,
+                                          activitymonitoringdataexNAMedian, by = 'Date' )
 colnames(activitymonitoringdataMeanMedian) <- c("Date", "Mean Steps", "Median Steps")
 activitymonitoringdataMeanMedian
 ```
@@ -164,15 +177,18 @@ activitymonitoringdataMeanMedian
 ```
 
 ## 2. What is the average daily activity pattern?
-
+## 2.1 Time series plot of the 5-minute interval (x-axis)
 
 ```r
 activitymonitoringdataflag <- cbind( activitymonitoringdata, !is.na(activitymonitoringdata$steps))
 colnames(activitymonitoringdataflag)[4] <- "flag"
 activitymonitoringdataexNA <- activitymonitoringdataflag[activitymonitoringdataflag$flag == TRUE,]
-activitymonitoringdataexNAtoAgg2 <- cbind(data.frame(cbind(activitymonitoringdataexNA$steps)), activitymonitoringdataexNA$interval)
+activitymonitoringdataexNAtoAgg2 <- cbind(data.frame(cbind(activitymonitoringdataexNA$steps)), 
+                                          activitymonitoringdataexNA$interval)
 colnames(activitymonitoringdataexNAtoAgg2) <- c("steps", "interval")
-activitymonitoringdataexNAavg2 <- aggregate(as.numeric(activitymonitoringdataexNAtoAgg2$steps), by = list(activitymonitoringdataexNAtoAgg2[,"interval"]), FUN = mean, na.rm = TRUE)
+activitymonitoringdataexNAavg2 <- aggregate(as.numeric(activitymonitoringdataexNAtoAgg2$steps), 
+                                            by = list(activitymonitoringdataexNAtoAgg2[,"interval"]), 
+                                            FUN = mean, na.rm = TRUE)
 colnames(activitymonitoringdataexNAavg2) <- c("interval", "average_steps")
 
 plot(activitymonitoringdataexNAavg2$interval,
@@ -184,7 +200,9 @@ plot(activitymonitoringdataexNAavg2$interval,
 axis(1, at = seq(0,2400, by = 100), labels = seq(0,2400, by = 100))
 ```
 
-![](PA1_template_files/figure-html/unnamed-chunk-5-1.png) 
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) 
+
+## 2.2 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
 ```r
 activitymonitoringdataexNAavg2order <- activitymonitoringdataexNAavg2[order(-activitymonitoringdataexNAavg2$average_steps),]
@@ -196,7 +214,7 @@ activitymonitoringdataexNAavg2order$interval[1]
 ```
 
 
-## Imputing missing values
+## Imputing missing values  
 
 
 
